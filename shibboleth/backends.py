@@ -1,5 +1,5 @@
 from django.db import connection
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import User, Permission, Group
 from django.contrib.auth.backends import RemoteUserBackend
 
 class ShibbolethRemoteUserBackend(RemoteUserBackend):
@@ -35,9 +35,30 @@ class ShibbolethRemoteUserBackend(RemoteUserBackend):
         # instead we use get_or_create when creating unknown users since it has
         # built-in safeguards for multiple threads.
         if self.create_unknown_user:
+
+            if 'groups' in shib_user_params:
+                groups = shib_user_params['groups']
+                del shib_user_params['groups']
+            else:
+                groups = None
+
             user, created = User.objects.get_or_create(username=username, defaults=shib_user_params)
             if created:
                 user = self.configure_user(user)
+
+            # currently active groups
+            used_groups = []
+
+            # add user to groups that came from shibboleth
+            for g in groups:
+                group, _ = Group.objects.get_or_create(name=g)
+                group.user_set.add(user)
+                used_groups.append(group)
+
+            # remove user from groups that were not received in shibboleth
+            for group in user.groups.all().exclude(name__in=used_groups):
+                group.user_set.remove(user)
+
         else:
             try:
                 user = User.objects.get(**shib_user_params)
