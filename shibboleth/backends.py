@@ -53,7 +53,7 @@ class ShibbolethRemoteUserBackend(RemoteUserBackend):
             for g in groups:
                 group, _ = Group.objects.get_or_create(name=g)
                 group.user_set.add(user)
-                used_groups.append(group)
+                used_groups.append(g)
 
             # remove user from groups that were not received in shibboleth
             for group in user.groups.all().exclude(name__in=used_groups):
