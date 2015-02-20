@@ -45,6 +45,15 @@ class ShibbolethRemoteUserBackend(RemoteUserBackend):
             user, created = User.objects.get_or_create(username=username, defaults=shib_user_params)
             if created:
                 user = self.configure_user(user)
+            else:
+                updated = False
+                for k, v in shib_user_params:
+                    oldv = getattr(user, k, None)
+                    if oldv != v:
+                        setattr(user, k, v)
+                        updated = True
+                if updated:
+                    user.save()
 
             # currently active groups
             used_groups = []
