@@ -1,6 +1,8 @@
 from django.db import connection
 from django.contrib.auth.models import User, Permission, Group
 from django.contrib.auth.backends import RemoteUserBackend
+from shibboleth.app_settings import SHIB_ATTRIBUTE_MAP_SAVER
+
 
 class ShibbolethRemoteUserBackend(RemoteUserBackend):
     """
@@ -69,6 +71,8 @@ class ShibbolethRemoteUserBackend(RemoteUserBackend):
             # remove user from groups that were not received in shibboleth
             for group in user.groups.all().exclude(name__in=used_groups):
                 group.user_set.remove(user)
+
+            SHIB_ATTRIBUTE_MAP_SAVER(user, shib_meta)
 
         else:
             try:

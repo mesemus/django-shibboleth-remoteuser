@@ -14,6 +14,9 @@ SHIB_MOCK_HEADERS = getattr(settings, 'SHIBBOLETH_MOCK_HEADERS', False)
 SHIB_ATTRIBUTE_MAP_PARSER = getattr(settings, 'SHIBBOLETH_ATTRIBUTE_MAP_PARSER',
                                     lambda name, value: value)
 
+SHIB_ATTRIBUTE_MAP_SAVER  = getattr(settings, 'SHIBBOLETH_ATTRIBUTE_MAP_SAVER',
+                                    lambda user, attrmap: None)
+
 LOGIN_URL = getattr(settings, 'LOGIN_URL', None)
 
 if not LOGIN_URL:
