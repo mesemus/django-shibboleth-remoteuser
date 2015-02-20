@@ -26,28 +26,30 @@ class ShibbolethRemoteUserBackend(RemoteUserBackend):
         Returns None if ``create_unknown_user`` is ``False`` and a ``User``
         object with the given username is not found in the database.
         """
+
         if not remote_user:
             return
         user = None
         username = self.clean_username(remote_user)
+
+        if 'groups' in shib_meta:
+            groups = shib_meta['groups']
+            del shib_meta['groups']
+        else:
+            groups = None
+
         shib_user_params = dict([(k, shib_meta[k]) for k in User._meta.get_all_field_names() if k in shib_meta])
         # Note that this could be accomplished in one try-except clause, but
         # instead we use get_or_create when creating unknown users since it has
         # built-in safeguards for multiple threads.
         if self.create_unknown_user:
 
-            if 'groups' in shib_user_params:
-                groups = shib_user_params['groups']
-                del shib_user_params['groups']
-            else:
-                groups = None
-
             user, created = User.objects.get_or_create(username=username, defaults=shib_user_params)
             if created:
                 user = self.configure_user(user)
             else:
                 updated = False
-                for k, v in shib_user_params:
+                for k, v in shib_user_params.items():
                     oldv = getattr(user, k, None)
                     if oldv != v:
                         setattr(user, k, v)

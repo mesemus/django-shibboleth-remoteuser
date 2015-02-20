@@ -2,7 +2,8 @@ from django.contrib.auth.middleware import RemoteUserMiddleware
 from django.contrib import auth
 from django.core.exceptions import ImproperlyConfigured
 
-from shibboleth.app_settings import SHIB_ATTRIBUTE_MAP, LOGOUT_SESSION_KEY
+from shibboleth.app_settings import SHIB_ATTRIBUTE_MAP, LOGOUT_SESSION_KEY, SHIB_ATTRIBUTE_MAP_PARSER
+
 
 class ShibbolethRemoteUserMiddleware(RemoteUserMiddleware):
     """
@@ -44,6 +45,7 @@ class ShibbolethRemoteUserMiddleware(RemoteUserMiddleware):
 
         # Make sure we have all required Shiboleth elements before proceeding.
         shib_meta, error = self.parse_attributes(request)
+
         # Add parsed attributes to the session.
         request.session['shib'] = shib_meta
         if error:
@@ -92,7 +94,13 @@ class ShibbolethRemoteUserMiddleware(RemoteUserMiddleware):
         for header, attr in SHIB_ATTRIBUTE_MAP.items():
             required, name = attr
             value = meta.get(header, None)
-            shib_attrs[name] = value
+            value = SHIB_ATTRIBUTE_MAP_PARSER(name, value)
+
+            if name in shib_attrs and isinstance(shib_attrs[name], list):
+                shib_attrs[name].extend(value)
+            else:
+                shib_attrs[name] = value
+
             if not value or value == '':
                 if required:
                     error = True

@@ -12,6 +12,14 @@
           <li>email: {{ user.email }}</li>
       </ul>
     </div> 
+    <div>
+      <h1>User groups</h1>
+      <ul>
+          {% for group in user.groups.all %}
+            <li> {{ group.name }}</li>
+          {% endfor %}
+      </ul>
+    </div>
 </body>
 </html>
 
